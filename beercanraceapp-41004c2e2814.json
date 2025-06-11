@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "beercanraceapp",
+  "private_key_id": "41004c2e281450665aec134c9e75bbb9124c5884",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCTgZZSqmU98XKH\nbaBGBW7m9fOTDwGAshXdc/sNH1K7wV47vXWsubuJBdt7ttfnDLTDjBdpty8+J8bB\nxlHNxWKbaX1n6CxTgZlITXfM+3iJtdf5kIHVpXq11JpMj5M+ub0msz32dF8IoUPi\ndlCq5bqT90EcbUAPvB8rp5fsQla8TuqIvjkhanyryx8GubwdYHnRRAqdlJCU0cVA\nGcQ7uocu+SkR74nfkOfLemxut2/3UWZgeuFj05uexZpXRxelsp6o+VJ7MD+ikkbm\n06Ql6LS6qZ9a1YKTM5pCvu59dqVh4SaTvbkVIrZNogsuIi6zhPDV0xLc/2fP3jXM\n0ZCn7FjbAgMBAAECggEAPisoVaf+aqiIKj8QhWKF1u8DXVA+RGUKZR8cSPASORLr\nKgeUgJt5SGuBEXfDMFzBFQfG2GX+EdbG5OW2laDjCfhgg/otMHbXSUtpOiokp/nN\n0J/QsOCBQwCblbgPiajT6WszKtvqL+N0Do7qOdUAGZvkw9vh25/gjVAh7lAZaVy/\nmNoCyqyaztWCw3fYfJ2i+4Su1R8lLcqMb9ZUHj8NjjK8+diOAvKFL0yvSiKIRY6k\nT4uxLLqNKKxTa2feorebd9ayD1oSgFk8cF0GXSoNdhvm4Xa7R/+bjOThUe4nQPwn\npThJtFkVVBBN5r+jTFGGaQOgBWYM5ST6o5pGb3+0JQKBgQDEu7xQfvPLdw+Z4BzD\nTJhMoReCq8cDbixzqBKz77OC/JCV+WfpOlBTO/Ht6rc8tis8oJE52ofrrQSglhUT\nGoE2ioEbXgs+9JPvX4iFBPKo3bYoy5TdRoXZrYxRPFpNLFjspe3ui3RXawiEMoGD\nuCwkevv9u065kSFx7un39sMXNQKBgQC/8Wg2uxz8bBMCrvJQO6gIn7lJpolbtLz6\nagSgZbn0INVYCdbpxWmU05TCf8ayZz8fmDxbTnuI/P8Hk3H1UesS3dPRYuLWuAiJ\n8Q6j5dTFxXGTKF2nGG0L2XCPgI5YfGIfrZflTF6k+o+vUUBAQBOQKGvQD4AyPqoV\nIQ7Ls4vhzwKBgQCNzJcWGfsU6zMmgN+acOnRScdNWwztzwphLoKUiTAFOI/qWULp\nWyusYqelCambK96MK1uhrH6Ngz6zlJmKFG+P5VLba/SFIvpB7cTTw9Y3mt6CFwKs\nXvl5BVr+7pZTy6QopgySBJgNrksMJe8uBqBihvZ8UvaSUCYgHckr/gNuBQKBgBM0\nNwYK0Iqc0YYaNNo8LcK3IFWzGNkZCzNOuinGI8W+JzpIubzn6HlgdejD2gBtfg5O\nL/O+tXNuRKHgaa1uxcM8eH3hk+qBvTD38kwJqbEj4QolJsGaGwbteWqSJSvLPhIH\nT0Q80NdWzltvGKuU/aAVuzu04VGlnWTByvYsf5lXAoGBAJYmPnFPBNMzyoiKviIS\nCO2k5x8137j751j+59dQKkTpUXknRqJFFIShUpy2GrXQojAtIfxx0Ewa3FI/LX+G\nQbSwzfqg1rVVqEZ6S/p1RTLIyG9QX+Fwxh0zWoy5X4dQXN09LJZ8aCGvPnUcwB29\nF4Iqag5I//UV1ClhhcVZNmr3\n-----END PRIVATE KEY-----\n",
+  "client_email": "beercanraceapp@beercanraceapp.iam.gserviceaccount.com",
+  "client_id": "112282543966946387098",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/beercanraceapp%40beercanraceapp.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
