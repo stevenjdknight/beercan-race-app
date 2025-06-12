@@ -13,7 +13,7 @@ GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/10ON_p0Y_yxa-o0W_4_oD
 
 # --- AUTHENTICATION ---
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-creds = ServiceAccountCredentials.from_json_keyfile_name("beercanraceapp-41004c2e2814.json", scope)
+creds = ServiceAccountCredentials.from_json_keyfile_dict(dict(st.secrets["gcp_service_account"]), scope)
 client = gspread.authorize(creds)
 sheet = client.open_by_url(GOOGLE_SHEET_URL).worksheet(SHEET_NAME)
 
@@ -67,3 +67,4 @@ if not df.empty:
     st.dataframe(df)
 else:
     st.info("No race entries yet. Be the first!")
+
