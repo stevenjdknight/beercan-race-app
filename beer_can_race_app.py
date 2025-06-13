@@ -1,3 +1,5 @@
+# Beer Can Scrimmage - redeploy trigger.
+
 import streamlit as st
 import pandas as pd
 import datetime
@@ -32,14 +34,16 @@ with st.form("entry_form"):
     boat_name = st.selectbox("Boat Name", ["V&G", "Claire the Cat"])
     skipper = st.selectbox("Skipper", ["Steven Knight", "Heather Knight"])
     model = st.selectbox("Make & Model", ["Sirius 21", "Hobie 16"])
-    start_time = st.time_input("Start Time", value=datetime.datetime.now().time())
-    finish_time = st.time_input("Finish Time", value=datetime.datetime.now().time())
+    start_time = st.time_input("Start Time", value=datetime.time(0, 0), step=60)
+    finish_time = st.time_input("Finish Time", value=datetime.time(0, 0), step=60)
     wind_direction = st.selectbox("Wind Direction", ["N", "NE", "E", "SE", "S", "SW", "W", "NW"])
-    marks = st.multiselect(
-        "Marks Rounded (in order)",
-        ["Island A", "Island B", "Island C", "Island D", "Island E", "Big Channel", "North Mark", "South Bay"],
-        help="Select the order of islands rounded; duplicates allowed."
-    )
+
+    all_marks = [
+        "Whitewater Island", "Duck Island", "Ramsey Lake Island", "Blueberry Island",
+        "Doctor's Island", "Minnow Island", "South Ramsey Island", "Hospital Island",
+        "Laurentian University Island", "Big Island", "Small Island", "Goose Island"
+    ]
+    marks = st.multiselect("Marks Rounded (in order, allow repeats)", all_marks)
     weather = st.multiselect("Weather Conditions", ["Calm", "Light Air", "Breezy", "Windy", "Gusty", "Rain", "Fog", "Cold", "Hot"])
     photo = st.file_uploader("Upload Photo (optional)", type=["jpg", "jpeg", "png"])
     submitted = st.form_submit_button("Submit Entry")
@@ -62,37 +66,33 @@ with st.form("entry_form"):
 
 # --- LEADERBOARD ---
 st.header("🏁 Leaderboard")
-data = sheet.get_all_records()
-df = pd.DataFrame(data)
+data = sheet.get_all_values()
 
-if not df.empty:
-    # Sort by selected race date (Fridays only)
-    df["Date"] = pd.to_datetime(df["Date"])
-    fridays = df[df["Date"].dt.dayofweek == 4]["Date"].drop_duplicates().sort_values(ascending=False)
-    selected_date = st.selectbox("Select Friday race date", fridays.dt.strftime("%Y-%m-%d"))
-    selected_df = df[df["Date"] == pd.to_datetime(selected_date)]
-
-    # Score system: 3-2-1 for top 3 corrected times
-    scored = selected_df.copy().sort_values("Corrected Time").reset_index(drop=True)
-    scored["Points"] = [3, 2, 1] + [0] * max(0, len(scored) - 3)
-
-    st.subheader("📋 Weekly Results")
-    st.dataframe(scored)
-
-    # --- Annual Leaderboard ---
-    st.subheader("🏆 Annual Standings")
-    all_scores = df.copy()
-    all_scores["Date"] = pd.to_datetime(all_scores["Date"])
-    all_scores = all_scores[all_scores["Date"].dt.dayofweek == 4]  # Fridays only
-    all_scores = all_scores.sort_values(["Date", "Corrected Time"])
-
-    def assign_points(group):
-        pts = [3, 2, 1] + [0] * max(0, len(group) - 3)
-        group["Points"] = pts
-        return group
-
-    grouped = all_scores.groupby("Date", group_keys=False).apply(assign_points)
-    season_scores = grouped.groupby("Skipper")["Points"].sum().reset_index().sort_values("Points", ascending=False)
-    st.dataframe(season_scores)
-else:
+if not data or len(data) <= 1:
     st.info("No race entries yet. Be the first!")
+else:
+    headers = data[0]
+    rows = data[1:]
+    df = pd.DataFrame(rows, columns=headers)
+    df["Corrected Time"] = pd.to_numeric(df["Corrected Time"], errors='coerce')
+    df["Date"] = pd.to_datetime(df["Date"], errors='coerce')
+
+    race_dates = df["Date"].dt.date.unique()
+    friday_dates = [d for d in race_dates if d.weekday() == 4]
+
+    selected_friday = st.selectbox("Select Friday Race Date", sorted(friday_dates, reverse=True))
+
+    if selected_friday:
+        weekly_df = df[df["Date"].dt.date == selected_friday]
+        weekly_df = weekly_df.sort_values("Corrected Time")
+        st.subheader(f"Results for {selected_friday}")
+        st.dataframe(weekly_df)
+
+        scored = weekly_df.copy()
+        scored["Points"] = [3 if i == 0 else 2 if i == 1 else 1 if i == 2 else 0 for i in range(len(scored))]
+
+        points_table = scored.groupby("Skipper")["Points"].sum().reset_index()
+        points_table = points_table.sort_values("Points", ascending=False)
+
+        st.subheader("🏆 Annual Standings")
+        st.dataframe(points_table)
