@@ -1,4 +1,5 @@
-# Beer Can Scrimmage - redeploy trigger
+# Forcing Streamlit to use secrets.toml on clean deploy
+
 import streamlit as st
 import pandas as pd
 import datetime
