@@ -21,7 +21,7 @@ Have fun and sail safe!
 
 # --- AUTHENTICATION ---
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-creds = ServiceAccountCredentials.from_json_keyfile_name("gcp_service_account.json", scope)
+creds = ServiceAccountCredentials.from_json_keyfile_dict(st.secrets["gcp_service_account"], scope)
 client = gspread.authorize(creds)
 sheet = client.open_by_url(st.secrets["private_gsheets_url"]).worksheet("Race Entries")
 
