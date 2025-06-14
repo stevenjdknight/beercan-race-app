@@ -3,27 +3,33 @@ import pandas as pd
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from datetime import datetime, time
-import pydeck as pdk
 
 # --- INSTRUCTIONS ---
 st.markdown("""
 ### Beer Can Scrimmage Race Log
-Welcome! Please enter your race data below:
-- **Start/Finish Times**: Use 24-hour format. Start time from **18:00**, finish from **19:00**, in 1-minute increments.
-- **Island Marks**: Select the marks in the order rounded (up to 6). Islands may appear more than once.
+
+Welcome! Please enter your race data below.
+
+#### How to Fill:
+- **Start/Finish Times**: Use 24-hour format. Start from **18:00**, finish from **19:00**, 1-min increments.
+- **Island Marks**: Select up to 6 in the order rounded. Duplicates allowed.
 - **Points System**:
   - 1 boat: 1 point
-  - 2 boats: 2/1 for 1st/2nd
-  - 3+ boats: 3/2/1 for top 3, and 1 point for other finishers
+  - 2 boats: 2/1 for 1st and 2nd
+  - 3+ boats: 3/2/1 for top 3, 1 point for other finishers
 
 Have fun and sail safe!
 """)
 
 # --- AUTHENTICATION ---
-scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-creds = ServiceAccountCredentials.from_json_keyfile_dict(st.secrets["gcp_service_account"], scope)
-client = gspread.authorize(creds)
-sheet = client.open_by_url(st.secrets["private_gsheets_url"]).worksheet("Race Entries")
+try:
+    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+    creds = ServiceAccountCredentials.from_json_keyfile_dict(st.secrets["gcp_service_account"], scope)
+    client = gspread.authorize(creds)
+    sheet = client.open_by_url(st.secrets["private_gsheets_url"]).worksheet("Race Entries")
+except Exception as e:
+    st.error(f"Error accessing Google Sheet: {e}")
+    st.stop()
 
 # --- ISLANDS ON LAKE RAMSEY ---
 islands = ["Island A", "Island B", "Gull Rock", "Bell Island", "The Sisters", "White Rocks", "Goat Island", "Ramsey Point", "Canoe Point"]
@@ -50,16 +56,24 @@ with st.form("race_form"):
 
     submitted = st.form_submit_button("Submit")
     if submitted:
-        row = [race_date, boat_name, skipper, boat_type, start_time.strftime("%H:%M"), finish_time.strftime("%H:%M"),
+        row = [race_date.strftime("%Y-%m-%d"), boat_name, skipper, boat_type,
+               start_time.strftime("%H:%M"), finish_time.strftime("%H:%M"),
                elapsed, corrected, *marks, protest, wind, comments]
-        sheet.append_row(row)
-        st.success("Entry recorded successfully!")
+        try:
+            sheet.append_row(row)
+            st.success("Entry recorded successfully!")
+        except Exception as e:
+            st.error(f"Error saving entry: {e}")
 
 # --- LOAD DATA ---
-data = sheet.get_all_values()
-df = pd.DataFrame(data[1:], columns=data[0])
-df["Corrected Time"] = pd.to_numeric(df["Corrected Time"], errors="coerce")
-df["Race Date"] = pd.to_datetime(df["Race Date"], errors="coerce")
+try:
+    data = sheet.get_all_values()
+    df = pd.DataFrame(data[1:], columns=data[0])
+    df["Corrected Time"] = pd.to_numeric(df["Corrected Time"], errors="coerce")
+    df["Race Date"] = pd.to_datetime(df["Race Date"], errors="coerce")
+except Exception as e:
+    st.error(f"Error loading race data: {e}")
+    st.stop()
 
 # --- WEEKLY LEADERBOARD ---
 st.header("Weekly Leaderboard")
@@ -81,8 +95,9 @@ if not weekly.empty:
     all_points = []
     for date in all_scores["Race Date"].unique():
         races = all_scores[all_scores["Race Date"] == date]
-        pts = [4, 3, 2] if len(races) >= 5 else ([3, 2, 1][:len(races)] if len(races) >= 3 else list(range(len(races), 0, -1)))
-        pts += [1] * max(0, len(races) - len(pts))
+        count = len(races)
+        pts = [4, 3, 2] if count >= 5 else ([3, 2, 1][:count] if count >= 3 else list(range(count, 0, -1)))
+        pts += [1] * max(0, count - len(pts))
         temp = races.copy()
         temp["Points"] = pts
         all_points.append(temp)
