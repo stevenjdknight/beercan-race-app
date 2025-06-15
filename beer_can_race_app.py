@@ -4,105 +4,65 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from datetime import datetime, time
 
+# --- PAGE CONFIG ---
+st.set_page_config(page_title="Beer Can Scrimmage", layout="wide")
+st.title("🍺 Beer Can Scrimmage Race Log")
+
 # --- INSTRUCTIONS ---
 st.markdown("""
-### Beer Can Scrimmage Race Log
+Enter your race details below.
 
-Welcome! Please enter your race data below.
-
-#### How to Fill:
-- **Start/Finish Times**: Use 24-hour format. Start from **18:00**, finish from **19:00**, 1-min increments.
-- **Island Marks**: Select up to 6 in the order rounded. Duplicates allowed.
-- **Points System**:
+- Start time defaults to 18:00, finish time to 19:00.
+- You can round up to 6 marks — duplicates allowed.
+- Points system:
   - 1 boat: 1 point
-  - 2 boats: 2/1 for 1st and 2nd
-  - 3+ boats: 3/2/1 for top 3, 1 point for other finishers
-
-Have fun and sail safe!
+  - 2 boats: 2/1
+  - 3+ boats: 3/2/1 for top 3, others get 1
 """)
 
-# --- AUTHENTICATION ---
+# --- GOOGLE SHEETS AUTH ---
+scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 try:
-    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    creds = ServiceAccountCredentials.from_json_keyfile_dict(st.secrets["gcp_service_account"], scope)
+    creds = ServiceAccountCredentials.from_json_keyfile_dict(
+        st.secrets["gcp_service_account"], scope)
     client = gspread.authorize(creds)
-    sheet = client.open_by_url(st.secrets["private_gsheets_url"]).worksheet("Race Entries")
+    sheet_url = st.secrets["private_gsheets_url"].split("/edit")[0]
+    worksheet = client.open_by_url(sheet_url).worksheet("Race Entries")
 except Exception as e:
     st.error(f"Error accessing Google Sheet: {e}")
     st.stop()
 
-# --- ISLANDS ON LAKE RAMSEY ---
-islands = ["Island A", "Island B", "Gull Rock", "Bell Island", "The Sisters", "White Rocks", "Goat Island", "Ramsey Point", "Canoe Point"]
+# --- ISLAND MARK OPTIONS ---
+islands = ["Island A", "Island B", "Gull Rock", "Bell Island", "The Sisters",
+           "White Rocks", "Goat Island", "Ramsey Point", "Canoe Point"]
 
-# --- RACE FORM ---
-st.header("Log a Race Result")
+# --- FORM ENTRY ---
 with st.form("race_form"):
-    race_date = st.date_input("Race Date", datetime.today())
+    st.subheader("Log a Race Result")
+
+    race_date = st.date_input("Race Date", value=datetime.today())
     boat_name = st.text_input("Boat Name")
     skipper = st.text_input("Skipper")
     boat_type = st.text_input("Boat Type")
+    start_time = st.time_input("Start Time", value=time(18, 0), step=60)
+    finish_time = st.time_input("Finish Time", value=time(19, 0), step=60)
 
-    start_time = st.time_input("Start Time", time(18, 0), step=60)
-    finish_time = st.time_input("Finish Time", time(19, 0), step=60)
-
-    elapsed = st.number_input("Elapsed Time (minutes)", min_value=1)
-    corrected = st.number_input("Corrected Time (minutes)", min_value=1)
+    elapsed = st.number_input("Elapsed Time (min)", min_value=1)
+    corrected = st.number_input("Corrected Time (min)", min_value=1)
 
     marks = [st.selectbox(f"Mark {i+1}", islands, key=f"mark_{i}") for i in range(6)]
 
-    protest = st.radio("Any Protests?", ["N", "Y"])
-    wind = st.selectbox("Wind Conditions", ["Drifter", "Light Air", "Moderate Breeze", "Strong Breeze"])
-    comments = st.text_area("Comments / Suggestions")
+    comments = st.text_area("Comments or Improvements")
 
-    submitted = st.form_submit_button("Submit")
+    submitted = st.form_submit_button("Submit Race")
+
     if submitted:
-        row = [race_date.strftime("%Y-%m-%d"), boat_name, skipper, boat_type,
-               start_time.strftime("%H:%M"), finish_time.strftime("%H:%M"),
-               elapsed, corrected, *marks, protest, wind, comments]
         try:
-            sheet.append_row(row)
-            st.success("Entry recorded successfully!")
+            worksheet.append_row([
+                str(race_date), boat_name, skipper, boat_type,
+                start_time.strftime("%H:%M"), finish_time.strftime("%H:%M"),
+                elapsed, corrected, *marks, comments
+            ])
+            st.success("Race submitted successfully!")
         except Exception as e:
-            st.error(f"Error saving entry: {e}")
-
-# --- LOAD DATA ---
-try:
-    data = sheet.get_all_values()
-    df = pd.DataFrame(data[1:], columns=data[0])
-    df["Corrected Time"] = pd.to_numeric(df["Corrected Time"], errors="coerce")
-    df["Race Date"] = pd.to_datetime(df["Race Date"], errors="coerce")
-except Exception as e:
-    st.error(f"Error loading race data: {e}")
-    st.stop()
-
-# --- WEEKLY LEADERBOARD ---
-st.header("Weekly Leaderboard")
-selected_date = st.date_input("Select Friday Race Date", datetime.today())
-weekly = df[df["Race Date"] == pd.to_datetime(selected_date)]
-
-if not weekly.empty:
-    weekly_sorted = weekly.sort_values("Corrected Time")
-    count = len(weekly_sorted)
-    base_points = [4, 3, 2] if count >= 5 else ([3, 2, 1][:count] if count >= 3 else list(range(count, 0, -1)))
-    base_points += [1] * max(0, count - len(base_points))
-    weekly_sorted["Points"] = base_points
-    st.dataframe(weekly_sorted[["Skipper", "Boat Name", "Corrected Time", "Points"]])
-
-    # --- CUMULATIVE STANDINGS ---
-    st.header("Season Standings")
-    all_scores = df[df["Corrected Time"].notna()]
-    all_scores = all_scores.sort_values(["Race Date", "Corrected Time"])
-    all_points = []
-    for date in all_scores["Race Date"].unique():
-        races = all_scores[all_scores["Race Date"] == date]
-        count = len(races)
-        pts = [4, 3, 2] if count >= 5 else ([3, 2, 1][:count] if count >= 3 else list(range(count, 0, -1)))
-        pts += [1] * max(0, count - len(pts))
-        temp = races.copy()
-        temp["Points"] = pts
-        all_points.append(temp)
-    season = pd.concat(all_points)
-    season_total = season.groupby("Skipper")["Points"].sum().reset_index().sort_values("Points", ascending=False)
-    st.dataframe(season_total)
-else:
-    st.info("No race data found for selected date.")
+            st.error(f"Error submitting race: {e}")
